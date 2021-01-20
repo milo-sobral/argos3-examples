@@ -5,6 +5,8 @@
 /* 2D vector definition */
 #include <argos3/core/utility/math/vector2.h>
 
+#define STRATEGY false
+
 /****************************************/
 /****************************************/
 
@@ -62,7 +64,7 @@ void CFootBotDiffusion::Init(TConfigurationNode& t_node) {
 /****************************************/
 
 void CFootBotDiffusion::ControlStep() {
-   boolean new_strategy = true;
+   bool new_strategy = STRATEGY;
 
    if (!new_strategy) {
      /* Get readings from proximity sensor */
