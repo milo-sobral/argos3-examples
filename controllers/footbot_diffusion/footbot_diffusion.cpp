@@ -5,7 +5,9 @@
 /* 2D vector definition */
 #include <argos3/core/utility/math/vector2.h>
 
+// UPDATED: change this variable to toggle between old and new strategy
 #define STRATEGY true
+// UPDATED: defines the minimum and maximum velocities of individual wheels
 #define MAX_VEL 40.0f
 #define MIN_VEL 2.0f
 
@@ -16,7 +18,7 @@ CFootBotDiffusion::CFootBotDiffusion() :
    m_pcWheels(NULL),
    m_pcProximity(NULL),
    m_cAlpha(10.0f),
-   m_fDelta(0.01f),
+   m_fDelta(0.0f), // UPDATED: reduced the Delta so that turning to avoid obstacles begins as soon as it is detected
    m_fWheelVelocity(2.5f),
    m_cGoStraightAngleRange(-ToRadians(m_cAlpha),
                            ToRadians(m_cAlpha)) {}
@@ -68,6 +70,7 @@ void CFootBotDiffusion::Init(TConfigurationNode& t_node) {
 void CFootBotDiffusion::ControlStep() {
    bool new_strategy = STRATEGY;
 
+   // UPDATED: change the STRATEGY variable to toggle betweeen original and new method.
    if (!new_strategy) {
      /* Get readings from proximity sensor */
      const CCI_FootBotProximitySensor::TReadings& tProxReads = m_pcProximity->GetReadings();
@@ -111,12 +114,12 @@ void CFootBotDiffusion::ControlStep() {
      if(m_cGoStraightAngleRange.WithinMinBoundIncludedMaxBoundIncluded(cAngle) &&
         cAccumulator.Length() < m_fDelta ) {
 
-        // This condition is added to avoid the algorithm not detecting obstacles when the robot is heading stratight onto them.
+        // UPDATED: This condition is added to avoid the algorithm not detecting obstacles when the robot is heading stratight onto them.
         if (cAccumulator.GetX() != 0.0f) {
           m_pcWheels->SetLinearVelocity(m_fWheelVelocity, m_fWheelVelocity * 0.9f);
         } else {
           /* Go straight */
-          // If we do not detect obstacles, we can accelerate up to a maximum velocity.
+          // UPDATED: If we do not detect obstacles, we can accelerate up to a maximum velocity.
           m_fWheelVelocity = 1.5f * m_fWheelVelocity;
           m_fWheelVelocity = (m_fWheelVelocity > MAX_VEL) ? MAX_VEL : m_fWheelVelocity;
           m_pcWheels->SetLinearVelocity(m_fWheelVelocity, m_fWheelVelocity);
@@ -124,17 +127,17 @@ void CFootBotDiffusion::ControlStep() {
 
      }
      else {
-        // If we detect an obstacle, we slow down up to a minimum Velocity.
+        // UPDATED: If we detect an obstacle, we slow down up to a minimum Velocity.
         m_fWheelVelocity = 0.95f * m_fWheelVelocity;
         m_fWheelVelocity = (m_fWheelVelocity < MIN_VEL) ? MIN_VEL : m_fWheelVelocity;
         /* Turn, depending on the sign of the angle */
 
-        // If the obstacles are mostly behind us, we don't need to turn as much
+        // UPDATED: If the obstacles are mostly behind us, we don't need to turn as much
         if (abs(cAngle.GetValue()) > 2.0f) {
           m_pcWheels->SetLinearVelocity(m_fWheelVelocity, m_fWheelVelocity * 0.8f);
         }
-        // Else, turn around to get "as far as possible" from the obstcale.
-        // The damping factor of 0.8 is to avoid completely stopping to turn around. 
+        // UPDATED: Else, turn around to get "as far as possible" from the obstcale.
+        // The damping factor of 0.8 is to avoid completely stopping to turn around.
         else if(cAngle.GetValue() > 0.0f) {
            m_pcWheels->SetLinearVelocity(m_fWheelVelocity, -m_fWheelVelocity * 0.8f);
         }
